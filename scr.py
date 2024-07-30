@@ -6,6 +6,7 @@ from tqdm import tqdm
 from io import BytesIO
 import os
 from options import cookies, headers
+from tkinter import messagebox
 
 
 def decode_filename(filename):
@@ -18,12 +19,11 @@ def decode_filename(filename):
             return filename
 
 
-def ask_user_confirmation():
-    while True:
-        user_input = input("Do you want to download this archive? (yes/no): ").strip().lower()
-        if user_input in ['yes', 'no']:
-            return user_input == 'yes'
-        print("Please answer 'yes' or 'no'.")
+def ask_user_confirmation(auto_confirm):
+    if auto_confirm:
+        return True
+    result = messagebox.askyesno("Download Confirmation", "Do you want to download this archive?")
+    return result
 
 
 def search(params):
@@ -48,12 +48,12 @@ def get_links_from_search(query):
     return hrefs
 
 
-def find_files_on_page(url):
+def find_files_on_page(url, auto_confirm, folder_path):
     response = requests.get(f"https://zakupki.gov.ru{url}", headers=headers, cookies=cookies)
     soup = BeautifulSoup(response.text, 'lxml')
     files = []
     multifiles = []
-
+    page_name = soup.find('span', class_="cardMainInfo__content").text
     try:
         files_block =  soup.find('div', class_='blockFilesTabDocs').find_all('div', class_='col clipText')
         for file in files_block:
@@ -77,8 +77,8 @@ def find_files_on_page(url):
                     multifiles.append((f"https://zakupki.gov.ru{file_link}", file_name))
                 if endwish == 'z01':
                     print("Невозможно залянуть в архив")
-                    if ask_user_confirmation():
-                        download_path = os.path.join('/home/alex', file_name)
+                    if ask_user_confirmation(auto_confirm):
+                        download_path = os.path.join(folder_path, page_name)
                         download_file(f"https://zakupki.gov.ru{file_link}", download_path)
                     else:
                         continue
@@ -164,22 +164,24 @@ def download_multivolume_archive(file_urls, download_dir):
     for file_url, _, _ in file_urls:
         download_file(file_url, os.path.join(download_dir, os.path.basename(download_dir)))
 
-def main(params):
+
+
+def main(params, auto_confirm, folder_entry):
     links = get_links_from_search(params)
     for link in links:
         print(link)
-        files, multifiles = find_files_on_page(link)
+        files, multifiles = find_files_on_page(link, auto_confirm, folder_entry)
         for file_url, file_name in files:
             print(f"Checking contents of archive: {file_url}")
             if check_archive_contents_via_http(file_url):
-                if ask_user_confirmation():
-                    download_path = os.path.join('/home/alex', os.path.basename(file_name))
+                if ask_user_confirmation(auto_confirm):
+                    download_path = os.path.join(folder_entry, os.path.basename(file_name))
                     download_file(file_url, download_path)
         for file_url, file_name in multifiles:
             print(f"Downloading first part of multivolume archive: {file_url}")
-            download_path = os.path.join('/home/alex', os.path.basename(file_name))
+            download_path = os.path.join(folder_entry, os.path.basename(file_name))
             first_part_path = download_and_check_first_part(file_url, download_path)
-            if first_part_path and ask_user_confirmation():
+            if first_part_path and ask_user_confirmation(auto_confirm):
                 print("Downloading full multivolume archive...")
                 download_multivolume_archive(files, download_path)
             else:

@@ -1,6 +1,7 @@
 from tkinter import Tk
 from tkinter import ttk
 import tkinter as tk
+from tkinter import filedialog
 from tkcalendar import DateEntry
 from scr import main
 
@@ -41,11 +42,11 @@ params = {
 def get_values():
     params['searchString'] = search_string_entry.get()
     params['morphology'] = 'on'
-    params['search-filter'] = search_filter_entry.get()
+    params['search-filter'] = 'Дате размещения'
     params['pageNumber'] = page_number_entry.get()
     params['sortDirection'] = 'true' if sort_direction_var.get() else 'false'
     params['strictEqual'] = 'true' if strictEqual_var.get() else 'false'
-    params['recordsPerPage'] = records_per_page_entry.get()
+    params['recordsPerPage'] = f"_{result_per_page_by_combobox.get()}"
     params['showLotsInfoHidden'] = 'true'
     params['savedSearchSettingsIdHidden'] = 'setting_order_lyg1m23n'
     params['sortBy'] = sort_options[sort_by_combobox.get()]
@@ -69,11 +70,18 @@ def get_values():
     params['orderPlacement94_0'] = 0
     params['orderPlacement94_1'] = 0
     params['orderPlacement94_2'] = 0
-    main(params)
-
+    auto_confirm = auto_confirm_var.get()  # Получаем значение auto_confirm
+    folder_ent = folder_entry.get()
+    main(params, auto_confirm, folder_ent)
 
 def logger(message):
     pass
+
+def select_folder():
+    folder_selected = filedialog.askdirectory()
+    if folder_selected:
+        folder_path.set(folder_selected)
+
 # Создаем окно
 root = Tk()
 root.title("Параметры поиска")
@@ -82,51 +90,45 @@ root.title("Параметры поиска")
 frame = ttk.Frame(root, padding="10")
 frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-ttk.Label(frame, text="Поиск").grid(row=0, column=0, sticky=tk.W)
+ttk.Label(frame, text="Поиск").grid(row=0, column=2, sticky=tk.W)
 search_string_entry = ttk.Entry(frame, width=50)
 search_string_entry.grid(row=0, column=1)
 search_string_entry.insert(0, params['searchString'])
 
-# Checkbox для morphology
-
-# Поле для ввода search-filter
-ttk.Label(frame, text="search-filter").grid(row=2, column=0, sticky=tk.W)
-search_filter_entry = ttk.Entry(frame, width=50)
-search_filter_entry.grid(row=2, column=1)
-search_filter_entry.insert(0, params['search-filter'])
 
 # Поле для ввода pageNumber
-ttk.Label(frame, text="Номер страницы").grid(row=3, column=0, sticky=tk.W)
-page_number_entry = ttk.Entry(frame, width=50)
-page_number_entry.grid(row=3, column=1)
+ttk.Label(frame, text="Номер страницы").grid(row=14, column=3, sticky=tk.W)
+page_number_entry = ttk.Entry(frame, width=5)
+page_number_entry.grid(row=14, column=4)
 page_number_entry.insert(0, params['pageNumber'])
 
 # Checkbox для sortDirection
 sort_direction_var = tk.BooleanVar(value=params['sortDirection'] == 'true')
-ttk.Checkbutton(frame, text="Сортировка от большего к меньшему", variable=sort_direction_var).grid(row=4, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="Сортировка от большего к меньшему", variable=sort_direction_var).grid(row=0, column=0, sticky=tk.W)
 
 strictEqual_var = tk.BooleanVar(value=params['strictEqual'] == 'true')
-ttk.Checkbutton(frame, text="Искать точно, как в запросе", variable=strictEqual_var).grid(row=4, column=1, sticky=tk.W)
+ttk.Checkbutton(frame, text="Искать точно, как в запросе", variable=strictEqual_var).grid(row=0, column=1, sticky=tk.W)
 
 # Поле для ввода recordsPerPage
-ttk.Label(frame, text="Результатов на странице").grid(row=5, column=0, sticky=tk.W)
-records_per_page_entry = ttk.Entry(frame, width=50)
-records_per_page_entry.grid(row=5, column=1)
-records_per_page_entry.insert(0, params['recordsPerPage'])
+ttk.Label(frame, text="Результатов на странице").grid(row=0, column=3, sticky=tk.W)
+results = [10, 20, 50]
+result_per_page_by_combobox = ttk.Combobox(frame, values=results)
+result_per_page_by_combobox.grid(row=0, column=4)
+result_per_page_by_combobox.set(10)
 
-ttk.Label(frame, text="Дата публикации с:").grid(row=6, column=0, sticky=tk.W)
+ttk.Label(frame, text="Дата публикации с:").grid(row=3, column=3, sticky=tk.W)
 publish_date_from_entry = DateEntry(frame, width=47, date_pattern='dd.mm.yyyy')
 publish_date_from_entry.set_date('01.01.2000')
-publish_date_from_entry.grid(row=6, column=1)
+publish_date_from_entry.grid(row=3, column=4)
 
 # Добавление поля для ввода applSubmissionCloseDateFrom
-ttk.Label(frame, text="Дата окончания подачи заявок с:").grid(row=7, column=0, sticky=tk.W)
+ttk.Label(frame, text="Дата окончания подачи заявок с:").grid(row=4, column=3, sticky=tk.W)
 appl_submission_close_date_from_entry = DateEntry(frame, width=47, date_pattern='dd.mm.yyyy')
-appl_submission_close_date_from_entry.grid(row=7, column=1)
+appl_submission_close_date_from_entry.grid(row=4, column=4)
 
 
 # Поле для ввода sortBy
-ttk.Label(frame, text="Сортировать по:").grid(row=8, column=0, sticky=tk.W)
+ttk.Label(frame, text="Сортировать по:").grid(row=5, column=3, sticky=tk.W)
 sort_options = {
     'По дате обновления': "UPDATE_DATE",
     'По дате размещения': "PUBLISH_DATE",
@@ -134,54 +136,54 @@ sort_options = {
     'По релевантности': "RELEVANCE"
 }
 sort_by_combobox = ttk.Combobox(frame, values=list(sort_options.keys()))
-sort_by_combobox.grid(row=8, column=1)
+sort_by_combobox.grid(row=5, column=4)
 sort_by_combobox.set('По дате обновления')
 
 # Checkbox для fz44
 fz44_var = tk.BooleanVar(value=params['fz44'] == 'on')
-ttk.Checkbutton(frame, text="ФЗ-44", variable=fz44_var).grid(row=9, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="ФЗ-44", variable=fz44_var).grid(row=6, column=0, sticky=tk.W)
 
 # Checkbox для fz223
 fz223_var = tk.BooleanVar(value=params['fz223'] == 'on')
-ttk.Checkbutton(frame, text="ФЗ-223", variable=fz223_var).grid(row=10, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="ФЗ-223", variable=fz223_var).grid(row=6, column=1, sticky=tk.W)
 
 # Checkbox для ppRf615
 pprf615_var = tk.BooleanVar(value=params['ppRf615'] == 'on')
-ttk.Checkbutton(frame, text="ПП РФ 615 (Капитальный ремонт) ", variable=pprf615_var).grid(row=11, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="ПП РФ 615 (Капитальный ремонт) ", variable=pprf615_var).grid(row=6, column=2, sticky=tk.W)
 
 # Checkbox для fz94
 fz94_var = tk.BooleanVar(value=params['fz94'] == 'on')
-ttk.Checkbutton(frame, text="ФЗ-94", variable=fz94_var).grid(row=12, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="ФЗ-94", variable=fz94_var).grid(row=7, column=0, sticky=tk.W)
 
 # Checkbox для af
 af_var = tk.BooleanVar(value=params['af'] == 'on')
-ttk.Checkbutton(frame, text="Подача заявок", variable=af_var).grid(row=13, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="Подача заявок", variable=af_var).grid(row=7, column=1, sticky=tk.W)
 
 # Checkbox для ca
 ca_var = tk.BooleanVar(value=params['ca'] == 'on')
-ttk.Checkbutton(frame, text="Работа комиссии", variable=ca_var).grid(row=14, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="Работа комиссии", variable=ca_var).grid(row=7, column=2, sticky=tk.W)
 
 # Checkbox для pc
 pc_var = tk.BooleanVar(value=params['pc'] == 'on')
-ttk.Checkbutton(frame, text="Закупка завершена", variable=pc_var).grid(row=15, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="Закупка завершена", variable=pc_var).grid(row=8, column=0, sticky=tk.W)
 
 # Checkbox для pa
 pa_var = tk.BooleanVar(value=params['pa'] == 'on')
-ttk.Checkbutton(frame, text="Закупка отменена", variable=pa_var).grid(row=16, column=0, sticky=tk.W)
+ttk.Checkbutton(frame, text="Закупка отменена", variable=pa_var).grid(row=8, column=2, sticky=tk.W)
 
 # Поле для ввода priceFromGeneral
-ttk.Label(frame, text="Начальная цена контракта (договора)").grid(row=17, column=0, sticky=tk.W)
+ttk.Label(frame, text="Начальная цена контракта (договора)").grid(row=8, column=3, sticky=tk.W)
 price_from_entry = ttk.Entry(frame, width=50)
-price_from_entry.grid(row=17, column=1)
+price_from_entry.grid(row=8, column=4)
 price_from_entry.insert(0, params['priceFromGeneral'])
 
-ttk.Label(frame, text="Конечная цена цена контракта (договора)").grid(row=17, column=2, sticky=tk.W)
+ttk.Label(frame, text="Конечная цена цена контракта (договора)").grid(row=9, column=3, sticky=tk.W)
 price_to_entry = ttk.Entry(frame, width=50)
-price_to_entry.grid(row=17, column=3)
+price_to_entry.grid(row=9, column=4)
 price_to_entry.insert(0, params['priceToGeneral'])
 
 # Поле для ввода currencyIdGeneral
-ttk.Label(frame, text="Тип Валюты").grid(row=18, column=0, sticky=tk.W)
+ttk.Label(frame, text="Тип Валюты").grid(row=6, column=3, sticky=tk.W)
 currency_options = {
     "Все валюты": -1,
     "Рубль": 1,
@@ -189,20 +191,33 @@ currency_options = {
     "Евро": 2
 }
 currency_combobox = ttk.Combobox(frame, values=list(currency_options.keys()), width=47)
-currency_combobox.grid(row=18, column=1)
+currency_combobox.grid(row=6, column=4)
 currency_combobox.set("Все валюты")
 
 # Поле для ввода gws
-ttk.Label(frame, text="Выберите тип закупки").grid(row=19, column=0, sticky=tk.W)
+ttk.Label(frame, text="Выберите тип закупки").grid(row=7, column=3, sticky=tk.W)
 gws_entry = ttk.Entry(frame, width=50)
-gws_entry.grid(row=19, column=1)
+gws_entry.grid(row=7, column=4)
 gws_entry.insert(0, params['gws'])
 
-# Checkbox для OrderPlacementSmallBusinessSubject
+auto_confirm_var = tk.BooleanVar()
+ttk.Checkbutton(frame, text="Автоматически подтверждать загрузку", variable=auto_confirm_var).grid(row=17, column=0, sticky=tk.W)
+folder_path = tk.StringVar()
+
+# Метка "Выберите путь сохранения"
+ttk.Label(frame, text="Выберите путь сохранения").grid(row=11, column=3, sticky=tk.W)
+
+# Текстовое поле для отображения выбранного пути
+folder_entry = ttk.Entry(frame, width=50, textvariable=folder_path)
+folder_entry.grid(row=12, column=3)
+
+# Кнопка для выбора папки
+select_button = ttk.Button(frame, text="Выбрать папку", command=select_folder)
+select_button.grid(row=12, column=4)
 
 
 # Кнопка для получения значений и печати параметров
-ttk.Button(frame, text="Submit", command=get_values).grid(row=26, column=0, columnspan=2)
+ttk.Button(frame, text="Начать парсинг", command=get_values).grid(row=26, column=0, columnspan=2)
 
 # Запуск основного цикла
 root.mainloop()
