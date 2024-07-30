@@ -2,6 +2,7 @@ from tkinter import Tk
 from tkinter import ttk
 import tkinter as tk
 from tkinter import filedialog
+from tkinter.scrolledtext import ScrolledText
 from tkcalendar import DateEntry
 from scr import main
 
@@ -72,10 +73,9 @@ def get_values():
     params['orderPlacement94_2'] = 0
     auto_confirm = auto_confirm_var.get()  # Получаем значение auto_confirm
     folder_ent = folder_entry.get()
-    main(params, auto_confirm, folder_ent)
+    log_text.delete('1.0', tk.END)
+    main(params, auto_confirm, folder_ent, log_text)
 
-def logger(message):
-    pass
 
 def select_folder():
     folder_selected = filedialog.askdirectory()
@@ -90,9 +90,9 @@ root.title("Параметры поиска")
 frame = ttk.Frame(root, padding="10")
 frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-ttk.Label(frame, text="Поиск").grid(row=0, column=2, sticky=tk.W)
+ttk.Label(frame, text="Поиск").grid(row=1, column=2, sticky=tk.W)
 search_string_entry = ttk.Entry(frame, width=50)
-search_string_entry.grid(row=0, column=1)
+search_string_entry.grid(row=1, column=1)
 search_string_entry.insert(0, params['searchString'])
 
 
@@ -218,6 +218,12 @@ select_button.grid(row=12, column=4)
 
 # Кнопка для получения значений и печати параметров
 ttk.Button(frame, text="Начать парсинг", command=get_values).grid(row=26, column=0, columnspan=2)
+
+log_text = ScrolledText(root, width=80, height=20)
+log_text.grid(row=30, column=0, columnspan=2, padx=10, pady=10)
+scrollbar = ttk.Scrollbar(root, orient=tk.VERTICAL, command=log_text.yview)
+scrollbar.grid(row=27, column=5, sticky=(tk.N, tk.S))
+log_text['yscrollcommand'] = scrollbar.set
 
 # Запуск основного цикла
 root.mainloop()
